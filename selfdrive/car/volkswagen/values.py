@@ -35,7 +35,7 @@ class CarControllerParams:
   STEER_TIME_STUCK_TORQUE = 1.9            # EPS limits same torque to 6 seconds, reset timer 3x within that period
 
   ACCEL_MAX = 2.0                          # 2.0 m/s max acceleration
-  ACCEL_MIN = -3.5                         # 3.5 m/s max deceleration
+  ACCEL_MIN = -3.3                         # 3.5 m/s max deceleration
 
   def __init__(self, CP):
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
@@ -264,7 +264,7 @@ class CAR(Platforms):
       VWCarInfo("Volkswagen Sharan 2018-22"),
       VWCarInfo("SEAT Alhambra 2018-20"),
     ],
-    specs=VolkswagenCarSpecs(mass=1639, wheelbase=2.92, minSteerSpeed=50*CV.KPH_TO_MS),
+    specs=VolkswagenCarSpecs(mass=1772, wheelbase=2.92, minSteerSpeed=0*CV.KPH_TO_MS),
   )
   TAOS_MK1 = VolkswagenMQBPlatformConfig(
     "VOLKSWAGEN TAOS 1ST GEN",  # Chassis B2

@@ -205,8 +205,12 @@ class CarState(CarStateBase):
     ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
 
     # Update gas, brakes, and gearshift.
-    ret.gas = pt_cp.vl["Motor_3"]["Fahrpedal_Rohsignal"] / 100.0
-    ret.gasPressed = ret.gas > 0
+    if not self.CP.enableGasInterceptor:
+      ret.gas = pt_cp.vl["Motor_3"]['Fahrpedal_Rohsignal'] / 100.0
+      ret.gasPressed = ret.gas > 0
+    else:
+      ret.gas = (pt_cp.vl["GAS_SENSOR"]['INTERCEPTOR_GAS'] + pt_cp.vl["GAS_SENSOR"]['INTERCEPTOR_GAS2']) / 1.5
+      ret.gasPressed = ret.gas > 460
     ret.brake = pt_cp.vl["Bremse_5"]["Bremsdruck"] / 250.0  # FIXME: this is pressure in Bar, not sure what OP expects
     ret.brakePressed = bool(pt_cp.vl["Motor_2"]["Bremslichtschalter"])
     ret.parkingBrake = bool(pt_cp.vl["Kombi_1"]["Bremsinfo"])
@@ -374,6 +378,8 @@ class CarState(CarStateBase):
       ("Lenkhilfe_2", 20),  # From J500 Steering Assist with integrated sensors
       ("Gate_Komf_1", 10),  # From J533 CAN gateway
     ]
+    if CP.enableGasInterceptor:
+      messages += [("GAS_SENSOR", 50)]
 
     if CP.transmissionType == TransmissionType.automatic:
       messages += [("Getriebe_1", 100)]  # From J743 Auto transmission control module

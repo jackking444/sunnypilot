@@ -29,6 +29,8 @@ class CarInterface(CarInterfaceBase):
   def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
     ret.carName = "volkswagen"
     ret.radarUnavailable = True
+    ret.enableGasInterceptor = False
+    ret.pcmCruise = not ret.enableGasInterceptor
 
     if candidate in PQ_CARS:
       # Set global PQ35/PQ46/NMS parameters
@@ -51,7 +53,7 @@ class CarInterface(CarInterfaceBase):
       # It is documented in a four-part blog series:
       #   https://blog.willemmelching.nl/carhacking/2022/01/02/vw-part1/
       # Panda ALLOW_DEBUG firmware required.
-      ret.dashcamOnly = True
+      #ret.dashcamOnly = True
 
     else:
       # Set global MQB parameters
@@ -78,6 +80,8 @@ class CarInterface(CarInterfaceBase):
     ret.steerLimitTimer = 0.4
     if candidate in PQ_CARS:
       ret.steerActuatorDelay = 0.2
+      ret.enableGasInterceptor = True
+      ret.autoResumeSng = True
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
     else:
       ret.steerActuatorDelay = 0.1
@@ -94,6 +98,7 @@ class CarInterface(CarInterfaceBase):
       # Proof-of-concept, prep for E2E only. No radar points available. Panda ALLOW_DEBUG firmware required.
       ret.openpilotLongitudinalControl = True
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_VOLKSWAGEN_LONG_CONTROL
+      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_VW_GAS_INTERCEPTOR 
       if ret.transmissionType == TransmissionType.manual:
         ret.minEnableSpeed = 4.5
 
@@ -115,7 +120,7 @@ class CarInterface(CarInterfaceBase):
 
     # Per-chassis tuning values, override tuning defaults here if desired
 
-    ret.autoResumeSng = ret.minEnableSpeed == -1
+    ret.autoResumeSng = ret.minEnableSpeed == -1 or ret.enableGasInterceptor
     ret.centerToFront = ret.wheelbase * 0.45
     return ret
 
