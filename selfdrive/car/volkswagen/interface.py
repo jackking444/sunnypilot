@@ -25,6 +25,8 @@ class CarInterface(CarInterfaceBase):
   def _get_params(ret, candidate: CAR, fingerprint, car_fw, experimental_long, docs):
     ret.carName = "volkswagen"
     ret.radarUnavailable = True
+    ret.enableGasInterceptorDEPRECATED = False
+    ret.pcmCruise = not ret.enableGasInterceptorDEPRECATED
 
     if ret.flags & VolkswagenFlags.PQ:
       # Set global PQ35/PQ46/NMS parameters
@@ -47,7 +49,7 @@ class CarInterface(CarInterfaceBase):
       # It is documented in a four-part blog series:
       #   https://blog.willemmelching.nl/carhacking/2022/01/02/vw-part1/
       # Panda ALLOW_DEBUG firmware required.
-      ret.dashcamOnly = True
+      #ret.dashcamOnly = True
 
     else:
       # Set global MQB parameters
@@ -90,6 +92,10 @@ class CarInterface(CarInterfaceBase):
       # Proof-of-concept, prep for E2E only. No radar points available. Panda ALLOW_DEBUG firmware required.
       ret.openpilotLongitudinalControl = True
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_VOLKSWAGEN_LONG_CONTROL
+      ret.enableGasInterceptorDEPRECATED = 0x201 in fingerprint[0] and ret.openpilotLongitudinalControl
+      if ret.enableGasInterceptorDEPRECATED:
+       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_VW_GAS_INTERCEPTOR
+
       if ret.transmissionType == TransmissionType.manual:
         ret.minEnableSpeed = 4.5
 
@@ -106,7 +112,7 @@ class CarInterface(CarInterfaceBase):
     ret.stopAccel = -0.55
     ret.vEgoStarting = 0.1
     ret.vEgoStopping = 0.5
-    ret.autoResumeSng = ret.minEnableSpeed == -1
+    ret.autoResumeSng = ret.minEnableSpeed == -1 or ret.enableGasInterceptorDEPRECATED
 
     return ret
 
