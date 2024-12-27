@@ -33,6 +33,16 @@ class CarController(CarControllerBase):
     self.sm = messaging.SubMaster(['longitudinalPlanSP'])
     self.param_s = Params()
     self.last_speed_limit_sign_tap_prev = False
+    self.hca_mode = 5                                       # init in (active)status 5
+    self.hca_mode_last = 0                                  # init last HCA mode
+    self.hca_centerDeadbandHigh = 10.5                      # init center dead band high
+    self.hca_centerDeadbandLow = 4                          # init center dead band low
+    self.hca_deadbandNM_switch = 150                        # init dead band NM switch
+    self.steeringAngle = 0                                  # init our own steeringAngle
+    self.steeringAngle_last = 0                             # init our own steeringAngle_last
+    self.steeringRate = 0                                   # init our own steeringRate
+    self.steerDeltaUpHCA5 = self.CCP.STEER_DELTA_UP         # init HCA 5 delta up ramp rate
+    self.steerDeltaUpHCA7 = self.CCP.STEER_DELTA_UP / 2     # init HCA 7 delta up ramp rate, adjust "/" value to change ramp rate difference
     self.speed_limit = 0.
     self.speed_limit_offset = 0
     self.timer = 0
@@ -106,6 +116,26 @@ class CarController(CarControllerBase):
 
       if CC.latActive:
         new_steer = int(round(actuators.steer * self.CCP.STEER_MAX))
+        if self.CCS == pqcan: # Custom HCA mode switching (PQ only)
+          self.steeringAngle = CS.out.steeringAngleDeg if CS.out.steeringAngleDeg >= 0 else CS.out.steeringAngleDeg * -1
+          self.steeringRate = CS.out.steeringRateDeg if CS.out.steeringRateDeg >= 0 else CS.out.steeringRateDeg *-1
+          if ((self.steeringAngle >= self.hca_centerDeadbandHigh) or \
+               ((CS.out.leftBlinker or CS.out.rightBlinker) and abs(new_steer >= self.hca_deadbandNM_switch)) or \
+               (abs(new_steer) >= (self.hca_deadbandNM_switch / 3) and not (CS.out.leftBlinker or CS.out.rightBlinker) and \
+                                        self.steeringAngle >= self.hca_centerDeadbandLow) or \
+               (self.hca_mode == 7 and ((abs(new_steer) >= 25 and self.steeringAngle <= self.hca_centerDeadbandLow) or \
+                                         self.steeringAngle >= self.hca_centerDeadbandLow))):
+            if self.steeringAngle_last > self.steeringAngle and self.steeringRate > 100:
+              self.CCP.STEER_DELTA_UP = self.steerDeltaUpHCA5
+            else:
+              self.CCP.STEER_DELTA_UP = self.steerDeltaUpHCA7
+            new_steer = int(round(new_steer * 0.7)) if self.steeringRate >= 5 and self.hca_mode_last == 5 else new_steer
+            self.hca_mode = 7
+          else:
+            self.hca_mode = 5
+            self.CCP.STEER_DELTA_UP = self.steerDeltaUpHCA5
+          self.hca_mode_last = self.hca_mode
+          self.steeringAngle_last = self.steeringAngle
         apply_steer = apply_driver_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.CCP)
         self.hca_frame_timer_running += self.CCP.STEER_STEP
         if self.apply_steer_last == apply_steer:
@@ -125,7 +155,8 @@ class CarController(CarControllerBase):
 
       self.eps_timer_soft_disable_alert = self.hca_frame_timer_running > self.CCP.STEER_TIME_ALERT / DT_CTRL
       self.apply_steer_last = apply_steer
-      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, apply_steer, hca_enabled))
+
+      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, apply_steer, hca_enabled, self.hca_mode))
 
       if self.CP.flags & VolkswagenFlags.STOCK_HCA_PRESENT:
         # Pacify VW Emergency Assist driver inactivity detection by changing its view of driver steering input torque
