@@ -87,7 +87,7 @@ class UploadItem:
   retry_count: int = 0
   current: bool = False
   progress: float = 0
-  allow_cellular: bool = False
+  allow_cellular: bool = True
 
   @classmethod
   def from_dict(cls, d: dict) -> UploadItem:
@@ -217,8 +217,8 @@ def cb(sm, item, tid, end_event: threading.Event, sz: int, cur: int) -> None:
   # or if athenad is shutting down to re-connect the websocket
   sm.update(0)
   metered = sm['deviceState'].networkMetered
-  if metered and (not item.allow_cellular):
-    raise AbortTransferException
+#  if metered and (not item.allow_cellular):
+#    raise AbortTransferException
 
   if end_event.is_set():
     raise AbortTransferException
