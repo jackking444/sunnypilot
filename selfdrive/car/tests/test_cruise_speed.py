@@ -76,6 +76,36 @@ class TestVCruiseHelper:
         self.v_cruise_helper.update_v_cruise(CS, enabled=True, is_metric=False)
         assert pressed == (self.v_cruise_helper.v_cruise_kph == self.v_cruise_helper.v_cruise_kph_last)
 
+  def test_adjust_speed_reverse_acc(self):
+    """
+    Asserts speed changes behavior with reverse_acc enabled vs disabled.
+    """
+    self.enable(V_CRUISE_INITIAL * CV.KPH_TO_MS, False, False)
+
+    for reverse_acc in (False, True):
+      for btn in (ButtonType.accelCruise, ButtonType.decelCruise):
+        # Test button press and release cycle
+        CS = car.CarState(cruiseState={"available": True})
+
+        # Press button
+        CS.buttonEvents = [ButtonEvent(type=btn, pressed=True)]
+        prev = self.v_cruise_helper.v_cruise_kph
+        self.v_cruise_helper.update_v_cruise(CS, enabled=True, is_metric=True, reverse_acc=reverse_acc)
+
+        # Release button
+        CS.buttonEvents = [ButtonEvent(type=btn, pressed=False)]
+        self.v_cruise_helper.update_v_cruise(CS, enabled=True, is_metric=True, reverse_acc=reverse_acc)
+
+        # Check the difference based on reverse_acc setting
+        diff = abs(self.v_cruise_helper.v_cruise_kph - prev)
+
+        if reverse_acc:
+          # When reverse_acc is True, diff should be greater than 1
+          assert diff > 1, f"With reverse_acc=True, expected diff > 1, got {diff}"
+        else:
+          # When reverse_acc is False, diff should be exactly 1
+          assert diff == 1, f"With reverse_acc=False, expected diff = 1, got {diff}"
+
   def test_rising_edge_enable(self):
     """
     Some car interfaces may enable on rising edge of a button,
