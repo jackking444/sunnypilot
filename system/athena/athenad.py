@@ -88,7 +88,7 @@ class UploadItem:
   retry_count: int = 0
   current: bool = False
   progress: float = 0
-  allow_cellular: bool = False
+  allow_cellular: bool = True
   priority: int = DEFAULT_UPLOAD_PRIORITY
 
   @classmethod
@@ -232,8 +232,8 @@ def cb(sm, item, tid, end_event: threading.Event, sz: int, cur: int) -> None:
   if not item.allow_cellular:
     if (time.monotonic() - sm.recv_time['deviceState']) > DEVICE_STATE_UPDATE_INTERVAL:
       sm.update(0)
-      if sm['deviceState'].networkMetered:
-        raise AbortTransferException
+      #if sm['deviceState'].networkMetered:
+      #  raise AbortTransferException
 
   if end_event.is_set():
     raise AbortTransferException
