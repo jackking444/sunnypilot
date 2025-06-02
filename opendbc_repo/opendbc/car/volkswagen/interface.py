@@ -18,6 +18,8 @@ NON_LINEAR_TORQUE_PARAMS = {
                              15.000000000038696, 1.1156542774105294, 0.10000000000000002, 0.9999999999999999]  #khonsu's JSW + back in my day...
 }
 class CarInterface(CarInterfaceBase):
+  CarState = CarState
+  CarController = CarController
   def torque_from_lateral_accel_siglin(self, latcontrol_inputs: LatControlInputs, torque_params: car.CarParams.LateralTorqueTuning, lateral_accel_error: float,
                                        lateral_accel_deadzone: float, friction_compensation: bool, gravity_adjusted: bool) -> float:
     friction = get_friction(lateral_accel_error, lateral_accel_deadzone, FRICTION_THRESHOLD, torque_params, friction_compensation)
@@ -44,8 +46,7 @@ class CarInterface(CarInterfaceBase):
 
     return float(steer_torque) + friction
 
-  CarState = CarState
-  CarController = CarController
+
 
   def torque_from_lateral_accel(self) -> TorqueFromLateralAccelCallbackType:
      if self.CP.carFingerprint in NON_LINEAR_TORQUE_PARAMS:
