@@ -14,7 +14,7 @@ NON_LINEAR_TORQUE_PARAMS = {
                               15.000000000038696, 1.1156542774105294, 0.10000000000000002, 0.9999999999999999]  #khonsu's JSW + back in my day...
  }
 NON_LINEAR_TORQUE_PARAMS = {
-  CAR.VOLKSWAGEN_SHARAN_MK2: [19.999999999518543, 0.013752973175158755, 0.29000000000000004, -0.007255929913027823, \
+  CAR.VOLKSWAGEN_SHARAN_MK2: [119.999999999518543, 0.013752973175158755, 0.29000000000000004, -0.007255929913027823, \
                              15.000000000038696, 1.1156542774105294, 0.10000000000000002, 0.9999999999999999]  #khonsu's JSW + back in my day...
 }
 class CarInterface(CarInterfaceBase):
@@ -106,13 +106,12 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerLimitTimer = 0.4
     if ret.flags & VolkswagenFlags.PQ:
-      ret.steerActuatorDelay = 0.11
-      ret.longitudinalTuning.kf = 1.2
-      ret.longitudinalTuning.kpBP = [0.]
-      ret.longitudinalTuning.kpV =  [.45]
-      ret.longitudinalTuning.kiBP = [0.]
-      ret.longitudinalTuning.kiV =  [.69]
-      ret.longitudinalActuatorDelay = 0.6
+      ret.steerActuatorDelay = 0.12
+      ret.lateralTuning.pid.kpBP = [0.0]
+      ret.lateralTuning.pid.kiBP = [0.0, 41.0]
+      ret.lateralTuning.pid.kf = 0.000003
+      ret.lateralTuning.pid.kpV = [0.01]
+      ret.lateralTuning.pid.kiV = [0.02, 0.2]
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
     else:
       ret.steerActuatorDelay = 0.1
