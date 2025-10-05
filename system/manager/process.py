@@ -47,9 +47,11 @@ def launcher(proc: str, name: str) -> None:
     raise
 
 
-def nativelauncher(pargs: list[str], cwd: str, name: str) -> None:
+def nativelauncher(pargs: list[str], cwd: str, name: str, env_vars: dict[str, str] = None) -> None:
   os.environ['MANAGER_DAEMON'] = name
-
+  if env_vars:
+   for key, value in env_vars.items():
+    os.environ[key] = value
   # exec the process
   os.chdir(cwd)
   os.execvp(pargs[0], pargs)
@@ -167,7 +169,7 @@ class ManagerProcess(ABC):
 
 
 class NativeProcess(ManagerProcess):
-  def __init__(self, name, cwd, cmdline, should_run, enabled=True, sigkill=False, watchdog_max_dt=None):
+  def __init__(self, name, cwd, cmdline, should_run, enabled=True, sigkill=False, watchdog_max_dt=None, env_vars=None):
     self.name = name
     self.cwd = cwd
     self.cmdline = cmdline
@@ -175,6 +177,7 @@ class NativeProcess(ManagerProcess):
     self.enabled = enabled
     self.sigkill = sigkill
     self.watchdog_max_dt = watchdog_max_dt
+    self.env_vars = env_vars or {}
     self.launcher = nativelauncher
 
   def prepare(self) -> None:
