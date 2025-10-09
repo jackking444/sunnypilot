@@ -392,6 +392,7 @@ void process_peripheral_state(Panda *panda, PubMaster *pm, bool no_fan_control) 
   static uint16_t prev_fan_speed = 999;
   static int ir_pwr = 0;
   static int prev_ir_pwr = 999;
+  static bool driver_camera_broken = false;  // Track if driver camera is broken
 
   static FirstOrderFilter integ_lines_filter(0, 30.0, 0.05);
 
@@ -412,6 +413,7 @@ void process_peripheral_state(Panda *panda, PubMaster *pm, bool no_fan_control) 
 
       cur_integ_lines = integ_lines_filter.update(cur_integ_lines);
       last_driver_camera_t = event.getLogMonoTime();
+      driver_camera_broken = false;  // Reset broken flag when we get data
 
       if (cur_integ_lines <= CUTOFF_IL) {
         ir_pwr = 0;
@@ -422,9 +424,13 @@ void process_peripheral_state(Panda *panda, PubMaster *pm, bool no_fan_control) 
       }
     }
 
-    // Disable IR on input timeout
+    // Handle driver camera timeout - if camera is broken, use fallback IR power
     if (nanos_since_boot() - last_driver_camera_t > 1e9) {
-      ir_pwr = 0;
+      if (!driver_camera_broken) {
+        driver_camera_broken = true;
+        // Set moderate IR power when driver camera is broken to maintain basic functionality
+        ir_pwr = 50;  // 50% IR power as fallback
+      }
     }
 
     if (ir_pwr != prev_ir_pwr || sm.frame % 100 == 0) {
