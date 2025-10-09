@@ -9,7 +9,7 @@ from openpilot.common.realtime import config_realtime_process
 def main():
     config_realtime_process([0, 1, 2, 3], 5)
 
-    pm = messaging.PubMaster(['driverMonitoringState'])
+    pm = messaging.PubMaster(['driverStateV2','driverMonitoringState'])
 
     # Создаем заглушку driverMonitoringState на основе примера из simulated_sensors.py
     while True:
