@@ -9,5 +9,5 @@ export VECLIB_MAXIMUM_THREADS=1
 if [ -z "$AGNOS_VERSION" ]; then
   export AGNOS_VERSION="13.1"
 fi
-
+export DISABLE_DRIVER=1
 export STAGING_ROOT="/data/safe_staging"
