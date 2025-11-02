@@ -109,3 +109,4 @@ Pipfile
 !.idea/customTargets.xml
 !.idea/tools/*
 !.run/*
+.vscode/settings.json
