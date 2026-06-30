@@ -20,11 +20,23 @@ def main():
         dat.driverStateV2.rightDriverData.faceProb = 1.0
         pm.send('driverStateV2', dat)
         msg = messaging.new_message('driverMonitoringState', valid=True)
-        msg.driverMonitoringState = {
-            "faceDetected": True,
-            "isDistracted": False,
-            "awarenessStatus": 1.0,
-        }
+        if loop_count < target_loops:
+            msg.driverMonitoringState = {
+                "faceDetected": True,
+                "isDistracted": False,
+                "awarenessStatus": 1.0,
+            }
+        else:
+            msg.driverMonitoringState = {
+                "faceDetected": True,
+                "isDistracted": True,  
+                "awarenessStatus": 0.0,
+            }
+        #msg.driverMonitoringState = {
+        #    "faceDetected": True,
+        #    "isDistracted": False,
+        #    "awarenessStatus": 1.0,
+        #}
         pm.send('driverMonitoringState', msg)
         time.sleep(0.05)  # 20Hz
 
