@@ -10,8 +10,7 @@ def main():
     config_realtime_process([0, 1, 2, 3], 5)
 
     pm = messaging.PubMaster(['driverStateV2','driverMonitoringState'])
-    target_loops = random.randint(6000, 12000)
-    loop_count = 0
+
     # Создаем заглушку driverMonitoringState на основе примера из simulated_sensors.py
     while True:
         dat = messaging.new_message('driverStateV2')
