@@ -30,7 +30,7 @@ class IntelligentCruiseButtonManagementInterface(IntelligentCruiseButtonManageme
   def __init__(self, CP, CP_SP):
     super().__init__(CP, CP_SP)
 
-  def create_can_mock_button_messages(self, packer, CS, send_button) -> list[CanData]:
+  def create_can_mock_button_messages(self, packer, CS, CAN, send_button) -> list[CanData]:
     can_sends = []
     copies_xp = BUTTON_COPIES_TIME_METRIC if CS.is_metric else BUTTON_COPIES_TIME_IMPERIAL
     copies = int(np.interp(BUTTON_COPIES_TIME, copies_xp, [1, BUTTON_COPIES]))
@@ -38,7 +38,7 @@ class IntelligentCruiseButtonManagementInterface(IntelligentCruiseButtonManageme
     # send resume at a max freq of 10Hz
     if (self.frame - self.last_button_frame) * DT_CTRL > 0.1:
       # send 25 messages at a time to increases the likelihood of resume being accepted
-      can_sends.extend([hyundaican.create_clu11(packer, self.frame, CS.clu11, send_button, self.CP)] * copies)
+      can_sends.extend([hyundaican.create_clu11(packer, self.frame, CS.clu11, send_button, self.CP, CAN)] * copies)
       if (self.frame - self.last_button_frame) * DT_CTRL >= 0.15:
         self.last_button_frame = self.frame
 
@@ -73,6 +73,6 @@ class IntelligentCruiseButtonManagementInterface(IntelligentCruiseButtonManageme
       if self.CP.carFingerprint in CANFD_CAR:
         can_sends.extend(self.create_canfd_mock_button_messages(packer, CS, CAN, send_button))
       else:
-        can_sends.extend(self.create_can_mock_button_messages(packer, CS, send_button))
+        can_sends.extend(self.create_can_mock_button_messages(packer, CS, CAN, send_button))
 
     return can_sends

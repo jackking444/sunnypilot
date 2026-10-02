@@ -32,7 +32,10 @@ class CarStateExt:
       if self.CP_SP.flags & HyundaiFlagsSP.SPEED_LIMIT_AVAILABLE:
         nav = cp.vl["Navi_HU"]["SpeedLim_Nav_Clu"]
       if self.CP_SP.flags & HyundaiFlagsSP.HAS_LKAS12:
-        cam = cp_cam.vl["LKAS12"]["CF_Lkas_TsrSpeed_Display_Clu"]
+        if self.CP.flags & HyundaiFlags.CAN_CANFD_BLENDED:
+          cam = cp.vl["LKAS12"]["CF_Lkas_TsrSpeed_Display_Clu"]
+        else:
+          cam = cp_cam.vl["LKAS12"]["CF_Lkas_TsrSpeed_Display_Clu"]
 
       speed_limit = cam if cam not in (0, 255) else nav
 

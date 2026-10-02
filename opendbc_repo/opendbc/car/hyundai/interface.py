@@ -88,8 +88,12 @@ class CarInterface(CarInterfaceBase):
 
     else:
       # Shared configuration for non CAN-FD cars
+      cam_can = CanBus(None, fingerprint).CAM
+      lka_steering = 0x50 in fingerprint[cam_can] or 0x110 in fingerprint[cam_can]
+      CAN = CanBus(None, fingerprint, lka_steering)
       ret.alphaLongitudinalAvailable = not (ret.flags & (HyundaiFlags.LEGACY | HyundaiFlags.UNSUPPORTED_LONGITUDINAL))
-      ret.enableBsm = 0x58b in fingerprint[0]
+      bsm_bus = CAN.ECAN if ret.flags & HyundaiFlags.CAN_CANFD_BLENDED else 0
+      ret.enableBsm = 0x58b in fingerprint[bsm_bus]
 
       # Send LFA message on cars with HDA
       if 0x485 in fingerprint[2]:
@@ -103,13 +107,22 @@ class CarInterface(CarInterfaceBase):
         # these cars require a special panda safety mode due to missing counters and checksums in the messages
         ret.safetyConfigs = [get_safety_config(structs.CarParams.SafetyModel.hyundaiLegacy)]
       else:
-        ret.safetyConfigs = [get_safety_config(structs.CarParams.SafetyModel.hyundai, 0)]
+        cfgs = [get_safety_config(structs.CarParams.SafetyModel.hyundai, 0)]
+        if ret.flags & HyundaiFlags.CAN_CANFD_BLENDED and CAN.ECAN >= 4:
+          cfgs.insert(0, get_safety_config(structs.CarParams.SafetyModel.noOutput))
+        ret.safetyConfigs = cfgs
 
       if ret.flags & HyundaiFlags.CAMERA_SCC:
         ret.safetyConfigs[0].safetyParam |= HyundaiSafetyFlags.CAMERA_SCC.value
 
+      if ret.flags & HyundaiFlags.CAN_CANFD_BLENDED:
+        ret.safetyConfigs[-1].safetyParam |= HyundaiSafetyFlags.CAN_CANFD_BLENDED.value
+
+      if lka_steering and ret.flags & HyundaiFlags.CAN_CANFD_BLENDED:
+        ret.flags |= HyundaiFlags.CANFD_LKA_STEER_MSG.value
+
       # These cars have the LFA button on the steering wheel
-      if 0x391 in fingerprint[0]:
+      if 0x391 in fingerprint[0] or ret.flags & HyundaiFlags.CAN_CANFD_BLENDED:
         ret.flags |= HyundaiFlags.HAS_LDA_BUTTON.value
 
     # Common lateral control setup
@@ -134,6 +147,9 @@ class CarInterface(CarInterfaceBase):
     ret.openpilotLongitudinalControl = alpha_long and ret.alphaLongitudinalAvailable
     ret.pcmCruise = not ret.openpilotLongitudinalControl
     ret.longitudinalActuatorDelay = 0.5
+
+    # if ret.flags & HyundaiFlags.CAN_CANFD_BLENDED:
+    #   ret.stoppingDecelRate = 0.4
 
     if ret.openpilotLongitudinalControl:
       ret.safetyConfigs[-1].safetyParam |= HyundaiSafetyFlags.LONG.value
@@ -170,7 +186,8 @@ class CarInterface(CarInterfaceBase):
 
     if not stock_cp.flags & HyundaiFlags.CANFD:
       # TODO-SP: add route with ESCC message for process replay
-      if ESCC_MSG in fingerprint[0]:
+      escc_bus = CAN.ECAN if stock_cp.flags & HyundaiFlags.CAN_CANFD_BLENDED else 0
+      if ESCC_MSG in fingerprint[escc_bus]:
         ret.flags |= HyundaiFlagsSP.ENHANCED_SCC.value
 
     if ret.flags & HyundaiFlagsSP.ENHANCED_SCC:
@@ -206,10 +223,10 @@ class CarInterface(CarInterfaceBase):
         stock_cp.minSteerSpeed = 0.0
         stock_cp.flags &= ~HyundaiFlags.MIN_STEER_32_MPH.value
 
-      if 0x544 in fingerprint[0]:
+      if 0x544 in fingerprint[0] or stock_cp.flags & HyundaiFlags.CAN_CANFD_BLENDED:
         ret.flags |= HyundaiFlagsSP.SPEED_LIMIT_AVAILABLE.value
 
-      if 0x53E in fingerprint[2]:
+      if 0x53E in fingerprint[2] or stock_cp.flags & HyundaiFlags.CAN_CANFD_BLENDED:
         ret.flags |= HyundaiFlagsSP.HAS_LKAS12.value
 
     ret.intelligentCruiseButtonManagementAvailable = not (stock_cp.flags & HyundaiFlags.CANFD_ALT_BUTTONS)
@@ -231,7 +248,7 @@ class CarInterface(CarInterfaceBase):
 
     if CP.openpilotLongitudinalControl and not ((CP.flags & (HyundaiFlags.CANFD_CAMERA_SCC | HyundaiFlags.CAMERA_SCC)) or
                                                 (CP_SP.flags & HyundaiFlagsSP.ENHANCED_SCC)):
-      addr, bus = 0x7d0, CanBus(CP).ECAN if CP.flags & HyundaiFlags.CANFD else 0
+      addr, bus = 0x7d0, CanBus(CP).ECAN if CP.flags & (HyundaiFlags.CANFD | HyundaiFlags.CAN_CANFD_BLENDED) else 0
       if CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG.value:
         addr, bus = 0x730, CanBus(CP).ECAN
       disable_ecu(can_recv, can_send, bus=bus, addr=addr, com_cont_req=communication_control)
