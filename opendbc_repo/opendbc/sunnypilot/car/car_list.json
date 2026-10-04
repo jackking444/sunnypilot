@@ -1815,6 +1815,17 @@
     ],
     "package": "All"
   },
+  "Hyundai Palisade (with HDA II) 2023-24": {
+    "platform": "HYUNDAI_PALISADE_2023",
+    "make": "Hyundai",
+    "brand": "hyundai",
+    "model": "Palisade (with HDA II)",
+    "year": [
+      "2023",
+      "2024"
+    ],
+    "package": "All"
+  },
   "Hyundai Santa Cruz 2022-24": {
     "platform": "HYUNDAI_SANTA_CRUZ_1ST_GEN",
     "make": "Hyundai",
@@ -2469,6 +2480,17 @@
       "2020",
       "2021",
       "2022"
+    ],
+    "package": "All"
+  },
+  "Kia Telluride (with HDA II) 2023-24": {
+    "platform": "HYUNDAI_PALISADE_2023",
+    "make": "Kia",
+    "brand": "hyundai",
+    "model": "Telluride (with HDA II)",
+    "year": [
+      "2023",
+      "2024"
     ],
     "package": "All"
   },
