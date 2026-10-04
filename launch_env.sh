@@ -20,3 +20,10 @@ if [ -z "$AGNOS_VERSION" ]; then
 fi
 
 export STAGING_ROOT="/data/safe_staging"
+
+# IQ.OS ships FFmpeg 4. loggerd/encoderd are linked against comma-deps FFmpeg 7
+# (libavformat.so.61). The system venv is read-only, so the libs live here.
+FFMPEG_LIB="/data/comma-deps/ffmpeg/lib"
+if [ -d "$FFMPEG_LIB" ]; then
+  export LD_LIBRARY_PATH="${FFMPEG_LIB}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
