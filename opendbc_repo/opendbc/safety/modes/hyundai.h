@@ -279,6 +279,8 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
 
     int aeb_decel_cmd = hyundai_can_canfd_blended ? 0 : msg->data[2];
     bool aeb_req = hyundai_can_canfd_blended ? 0 : GET_BIT(msg, 54U);
+    // Blended SCC11 uses bits 52-57 for ComfortBandUpper, not AEB requests.
+    bool aeb_stop_req = !hyundai_can_canfd_blended && GET_BIT(msg, 55U);
 
     bool violation = false;
 
@@ -287,6 +289,7 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
     if (!hyundai_escc) {
       violation |= (aeb_decel_cmd != 0);
       violation |= aeb_req;
+      violation |= aeb_stop_req;
     }
 
     if (violation) {

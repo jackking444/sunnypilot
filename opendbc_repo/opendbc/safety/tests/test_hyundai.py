@@ -372,11 +372,12 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
     self.safety.set_safety_hooks(CarParams.SafetyModel.hyundai, HyundaiSafetyFlags.LONG)
     self.safety.init_tests()
 
-  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0, aeb_stop_req=False):
     values = {
       "aReqRaw": accel,
       "aReqValue": accel,
       "AEB_CmdAct": int(aeb_req),
+      "AEB_StopReq": int(aeb_stop_req),
       "CR_VSM_DecCmd": aeb_decel,
     }
     return self.packer.make_can_msg_safety("SCC12", self.SCC_BUS, values)
@@ -405,6 +406,7 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
     self.assertTrue(self._tx(self._accel_msg(0)))
     self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
     self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_stop_req=True)))
 
 
 class TestHyundaiLongitudinalSafetyCameraSCC(HyundaiLongitudinalBase, TestHyundaiSafety):
@@ -420,11 +422,12 @@ class TestHyundaiLongitudinalSafetyCameraSCC(HyundaiLongitudinalBase, TestHyunda
     self.safety.set_safety_hooks(CarParams.SafetyModel.hyundai, HyundaiSafetyFlags.LONG | HyundaiSafetyFlags.CAMERA_SCC)
     self.safety.init_tests()
 
-  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0, aeb_stop_req=False):
     values = {
       "aReqRaw": accel,
       "aReqValue": accel,
       "AEB_CmdAct": int(aeb_req),
+      "AEB_StopReq": int(aeb_stop_req),
       "CR_VSM_DecCmd": aeb_decel,
     }
     return self.packer.make_can_msg_safety("SCC12", self.SCC_BUS, values)
@@ -437,6 +440,7 @@ class TestHyundaiLongitudinalSafetyCameraSCC(HyundaiLongitudinalBase, TestHyunda
     self.assertTrue(self._tx(self._accel_msg(0)))
     self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
     self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_stop_req=True)))
 
   def test_tester_present_allowed(self):
     pass
@@ -582,6 +586,22 @@ class TestHyundaiNonSCCSafety_HEV_EV(TestHyundaiSafety):
   def _user_gas_msg(self, gas):
     values = {self.GAS_MSG[1]: gas}
     return self.packer.make_can_msg_safety(self.GAS_MSG[0], 0, values, fix_checksum=checksum)
+
+
+class TestHyundaiBlendedAebLayout(unittest.TestCase):
+  def test_comfort_band_is_not_aeb_stop_request(self):
+    safety = libsafety_py.libsafety
+    packer = CANPackerSafety("hyundai_palisade_2023_generated")
+    safety.set_current_safety_param_sp(HyundaiSafetyFlagsSP.DEFAULT)
+    safety.set_safety_hooks(CarParams.SafetyModel.hyundai, HyundaiSafetyFlags.CAN_CANFD_BLENDED | HyundaiSafetyFlags.LONG)
+    safety.init_tests()
+    safety.set_controls_allowed(True)
+
+    # Blended SCC11 bits 52-57 encode comfort, including the normal SCC12 AEB bit 55.
+    for comfort_raw in range(64):
+      with self.subTest(comfort_raw=comfort_raw):
+        values = {"aReqRaw": 0, "aReqValue": 0, "ComfortBandUpper": comfort_raw * 0.02}
+        self.assertTrue(safety.safety_tx_hook(packer.make_can_msg_safety("SCC11", 1, values)))
 
 
 if __name__ == "__main__":

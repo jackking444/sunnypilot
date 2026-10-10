@@ -3336,6 +3336,7 @@ struct Event {
     LATERAL_MANEUVER_PLAN,
     DRIVER_MONITORING_STATE,
     CHESTNUT_STATE,
+    CHESTNUT_GPU_STATE,
   };
 
   struct _capnpPrivate {
@@ -23358,6 +23359,10 @@ public:
   inline bool hasChestnutState() const;
   inline  ::cereal::ChestnutState::Reader getChestnutState() const;
 
+  inline bool isChestnutGpuState() const;
+  inline bool hasChestnutGpuState() const;
+  inline  ::cereal::ChestnutState::Reader getChestnutGpuState() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -24600,6 +24605,14 @@ public:
   inline  ::cereal::ChestnutState::Builder initChestnutState();
   inline void adoptChestnutState(::capnp::Orphan< ::cereal::ChestnutState>&& value);
   inline ::capnp::Orphan< ::cereal::ChestnutState> disownChestnutState();
+
+  inline bool isChestnutGpuState();
+  inline bool hasChestnutGpuState();
+  inline  ::cereal::ChestnutState::Builder getChestnutGpuState();
+  inline void setChestnutGpuState( ::cereal::ChestnutState::Reader value);
+  inline  ::cereal::ChestnutState::Builder initChestnutGpuState();
+  inline void adoptChestnutGpuState(::capnp::Orphan< ::cereal::ChestnutState>&& value);
+  inline ::capnp::Orphan< ::cereal::ChestnutState> disownChestnutGpuState();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -59824,6 +59837,60 @@ inline void Event::Builder::adoptChestnutState(
 }
 inline ::capnp::Orphan< ::cereal::ChestnutState> Event::Builder::disownChestnutState() {
   KJ_IREQUIRE((which() == Event::CHESTNUT_STATE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::cereal::ChestnutState>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Event::Reader::isChestnutGpuState() const {
+  return which() == Event::CHESTNUT_GPU_STATE;
+}
+inline bool Event::Builder::isChestnutGpuState() {
+  return which() == Event::CHESTNUT_GPU_STATE;
+}
+inline bool Event::Reader::hasChestnutGpuState() const {
+  if (which() != Event::CHESTNUT_GPU_STATE) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Event::Builder::hasChestnutGpuState() {
+  if (which() != Event::CHESTNUT_GPU_STATE) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::cereal::ChestnutState::Reader Event::Reader::getChestnutGpuState() const {
+  KJ_IREQUIRE((which() == Event::CHESTNUT_GPU_STATE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::cereal::ChestnutState>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::cereal::ChestnutState::Builder Event::Builder::getChestnutGpuState() {
+  KJ_IREQUIRE((which() == Event::CHESTNUT_GPU_STATE),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::cereal::ChestnutState>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Event::Builder::setChestnutGpuState( ::cereal::ChestnutState::Reader value) {
+  _builder.setDataField<Event::Which>(
+      ::capnp::bounded<4>() * ::capnp::ELEMENTS, Event::CHESTNUT_GPU_STATE);
+  ::capnp::_::PointerHelpers< ::cereal::ChestnutState>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::cereal::ChestnutState::Builder Event::Builder::initChestnutGpuState() {
+  _builder.setDataField<Event::Which>(
+      ::capnp::bounded<4>() * ::capnp::ELEMENTS, Event::CHESTNUT_GPU_STATE);
+  return ::capnp::_::PointerHelpers< ::cereal::ChestnutState>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Event::Builder::adoptChestnutGpuState(
+    ::capnp::Orphan< ::cereal::ChestnutState>&& value) {
+  _builder.setDataField<Event::Which>(
+      ::capnp::bounded<4>() * ::capnp::ELEMENTS, Event::CHESTNUT_GPU_STATE);
+  ::capnp::_::PointerHelpers< ::cereal::ChestnutState>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::cereal::ChestnutState> Event::Builder::disownChestnutGpuState() {
+  KJ_IREQUIRE((which() == Event::CHESTNUT_GPU_STATE),
               "Must check which() before get()ing a union member.");
   return ::capnp::_::PointerHelpers< ::cereal::ChestnutState>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));

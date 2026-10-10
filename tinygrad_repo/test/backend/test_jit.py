@@ -2,11 +2,11 @@
 import unittest
 import numpy as np
 
-from test.helpers import assert_jit_cache_len, call_is_graph, not_support_multi_device, needs_second_gpu, KernelCountException
+from test.helpers import is_hcq2_device, assert_jit_cache_len, call_is_graph, not_support_multi_device, needs_second_gpu, KernelCountException
 from test.unit.test_jit import _simple_test
 from tinygrad import Tensor, TinyJit, Device, dtypes
 from tinygrad.engine.jit import graph_class
-from tinygrad.helpers import JIT, DEV, GlobalCounters, HCQ2
+from tinygrad.helpers import JIT, DEV, GlobalCounters
 from tinygrad.uop.ops import Ops
 from tinygrad.renderer.isa.x86 import X86Renderer
 
@@ -222,7 +222,7 @@ class TestJitPrune(unittest.TestCase):
     assert_jit_cache_len(w2_prune, 1)
 
 class TestJitFree(unittest.TestCase):
-  @unittest.skipIf(HCQ2, "hcq2 keeps refs to intermediate buffers")
+  @unittest.skipIf(is_hcq2_device(), "hcq2 keeps refs to intermediate buffers")
   def test_free_intermediates(self):
     ext_tensor = Tensor([1,24,23,45,1])
     @TinyJit
@@ -292,7 +292,7 @@ class TestJitGraphSplit(unittest.TestCase):
     if graph_t is None: return
 
     got = f.captured.linear.src
-    from tinygrad.runtime.graph.hcq import HCQGraph
+    from extra.hcq1.graph import HCQGraph
     from tinygrad.engine.jit import MultiGraphRunner
     if graph_t is HCQGraph:
       validate = hcqgraph
