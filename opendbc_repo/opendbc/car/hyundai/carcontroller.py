@@ -249,7 +249,8 @@ class CarController(CarControllerBase, EsccCarController, LeadDataCarController,
                                                            set_speed_in_units, hud_control, self.lead_data, CS.main_cruise_enabled, self.tuning))
         self.accel_last = accel
     elif can_canfd_blended:
-      if CC.cruiseControl.cancel:
+      # Let factory SCC disengage on brake before sending the pause/resume CANCEL button.
+      if CC.cruiseControl.cancel and self.cancel_counter > CANCEL_BUTTON_DELAY_FRAMES:
         can_sends.append(hyundaican.create_clu11(self.packer, self.frame, CS.clu11, Buttons.CANCEL, self.CP, self.CAN))
       elif CC.cruiseControl.resume:
         if (self.frame - self.last_button_frame) * DT_CTRL > 0.1:

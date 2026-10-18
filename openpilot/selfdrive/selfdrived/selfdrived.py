@@ -140,6 +140,7 @@ class SelfdriveD(CruiseHelper):
     self.last_functional_fan_frame = 0
     self.events_prev = []
     self.logged_comm_issue = None
+    self.panda_faults_prev = set()
     self.not_running_prev = None
     self.experimental_mode = False
     self.personality = get_sanitize_int_param(
@@ -377,7 +378,28 @@ class SelfdriveD(CruiseHelper):
     elif lane_turn_direction == TurnDirection.turnRight:
       self.events_sp.add(custom.OnroadEventSP.EventName.laneTurnRight)
 
+    active_panda_faults = set()
     for i, pandaState in enumerate(self.sm['pandaStates']):
+      for fault in pandaState.faults:
+        fault_key = (i, fault)
+        active_panda_faults.add(fault_key)
+        if fault == log.PandaState.FaultType.interruptRateCan2 and fault_key not in self.panda_faults_prev:
+          can_state = pandaState.canState1
+          cloudlog.event(
+            "panda_can_interrupt_rate_fault",
+            panda_index=i,
+            can_bus=2,
+            irq0_call_rate=can_state.irq0CallRate,
+            irq1_call_rate=can_state.irq1CallRate,
+            total_rx_lost=can_state.totalRxLostCnt,
+            total_tx_lost=can_state.totalTxLostCnt,
+            total_error_count=can_state.totalErrorCnt,
+            rx_buffer_overflow=pandaState.rxBufferOverflow,
+            tx_buffer_overflow=pandaState.txBufferOverflow,
+            interrupt_load=pandaState.interruptLoad,
+            error=True,
+          )
+
       # All pandas must match the list of safetyConfigs, and if outside this list, must be silent or noOutput
       if i < len(self.CP.safetyConfigs):
         safety_mismatch = pandaState.safetyModel != self.CP.safetyConfigs[i].safetyModel or \
@@ -392,6 +414,8 @@ class SelfdriveD(CruiseHelper):
 
       if log.PandaState.FaultType.relayMalfunction in pandaState.faults:
         self.events.add(EventName.relayMalfunction)
+
+    self.panda_faults_prev = active_panda_faults
 
     # Handle HW and system malfunctions
     # Order is very intentional here. Be careful when modifying this.
